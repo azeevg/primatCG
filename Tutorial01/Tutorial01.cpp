@@ -13,10 +13,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 //--------------------------------------------------------------------------------------
 #include <windows.h>
+#include <windowsx.h>
 #include <d3d11_1.h>
 #include <directxcolors.h>
+#include <math.h>
 #include "resource.h"
-
 using namespace DirectX;
 
 //--------------------------------------------------------------------------------------
@@ -33,7 +34,7 @@ ID3D11DeviceContext1*   g_pImmediateContext1 = nullptr;
 IDXGISwapChain*         g_pSwapChain = nullptr;
 IDXGISwapChain1*        g_pSwapChain1 = nullptr;
 ID3D11RenderTargetView* g_pRenderTargetView = nullptr;
-
+DirectX::XMVECTORF32	g_ClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 //--------------------------------------------------------------------------------------
 // Forward declarations
@@ -65,10 +66,60 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
     // Main message loop
     MSG msg = {0};
+	int xPos = 0;
+	int yPos = 0;
+	RECT rc;
+	GetClientRect(g_hWnd, &rc);
+	UINT width = rc.right - rc.left;
+	UINT height = rc.bottom - rc.top;
+
     while( WM_QUIT != msg.message )
     {
         if( PeekMessage( &msg, nullptr, 0, 0, PM_REMOVE ) )
         {
+			switch( msg.message ) {
+		
+			case WM_LBUTTONDOWN:
+				xPos = GET_X_LPARAM(msg.lParam);
+				yPos = GET_Y_LPARAM(msg.lParam);
+				break;
+	
+			case WM_MOUSEMOVE:
+				if (MK_LBUTTON == msg.wParam)
+				{
+					int newYPos = GET_Y_LPARAM(msg.lParam);
+					int newXPos = GET_X_LPARAM(msg.lParam);
+					
+					if (abs(newXPos - xPos) > 30)
+						xPos = newXPos;
+					if (abs(newYPos - yPos) > 30)
+						yPos = newYPos;
+
+					g_ClearColor->f[0] += (float)(newXPos - xPos) / (float)width;
+					g_ClearColor->f[1] -= (float)(newYPos - yPos) / (float)height;
+
+					if (g_ClearColor->f[0] > 1.0)
+						g_ClearColor->f[0] = 1.0;
+					if (g_ClearColor->f[0] < 0)
+						g_ClearColor->f[0] = 0.0;
+					if (g_ClearColor->f[1] > 1.0)
+						g_ClearColor->f[1] = 1.0;
+					if (g_ClearColor->f[1] < 0.0)
+						g_ClearColor->f[1] = 0.0;
+
+					xPos = newXPos;
+					yPos = newYPos;
+
+				}
+				break;
+			case WM_MOUSEWHEEL:
+					
+				
+				break;
+
+			}
+				Render();
+				
             TranslateMessage( &msg );
             DispatchMessage( &msg );
         }
@@ -317,7 +368,12 @@ HRESULT InitDevice()
 void Render()
 {
     // Just clear the backbuffer
-    g_pImmediateContext->ClearRenderTargetView( g_pRenderTargetView, Colors::MidnightBlue );
+
+	float ClearColor[4] = { g_ClearColor->f[0], 
+							g_ClearColor->f[1], 
+							g_ClearColor->f[2], 
+							1.0f };
+	g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, ClearColor );
     g_pSwapChain->Present( 0, 0 );
 }
 
