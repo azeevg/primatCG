@@ -12,4 +12,7 @@
 #define ALPHA	3
 
 
+#define WINDOW_HEIGHT	600
+#define WINDOW_WIDTH	800
+
 #endif // CONSTANTS_H_451FAE
