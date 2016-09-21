@@ -70,58 +70,11 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
     // Main message loop
     MSG msg = {0};
-   	int xPos = 0;
-	int yPos = 0;
-	int newYPos = 0;
-	int newXPos = 0;
-
-	RECT rc;
-	GetClientRect( g_hWnd, &rc );
-	UINT width = rc.right - rc.left;
-	UINT height = rc.bottom - rc.top;
 
     while( WM_QUIT != msg.message )
     {
         if( PeekMessage( &msg, nullptr, 0, 0, PM_REMOVE ) )
-        {
-			switch( msg.message ) {
-		
-			case WM_LBUTTONDOWN:
-				xPos = GET_X_LPARAM( msg.lParam );
-				yPos = GET_Y_LPARAM( msg.lParam );
-				break;
-	
-			case WM_MOUSEMOVE:
-				if( MK_LBUTTON == msg.wParam )
-				{
-					newYPos = GET_Y_LPARAM( msg.lParam );
-					newXPos = GET_X_LPARAM( msg.lParam );
-					
-					if ( abs( newXPos - xPos ) > JUMP_LIMIT )
-						xPos = newXPos;
-					if ( abs( newYPos - yPos ) > JUMP_LIMIT )
-						yPos = newYPos;
-
-					g_clearColor->f[0] += (float)( newXPos - xPos ) / (float)width;
-					g_clearColor->f[1] -= (float)( newYPos - yPos ) / (float)height;
-
-					g_clearColor->f[0] = limitColorComponent( g_clearColor->f[0] );
-					g_clearColor->f[1] = limitColorComponent( g_clearColor->f[1] );
-					
-					xPos = newXPos;
-					yPos = newYPos;
-				}
-				break;
-
-			case WM_MOUSEWHEEL:
-				if ( MK_LBUTTON == GET_KEYSTATE_WPARAM( msg.wParam ) )
-				{
-					g_clearColor->f[2] += GET_WHEEL_DELTA_WPARAM( msg.wParam ) / (float)WHEEL_DELTA * MOUSEWHEEL_SENSITIVITY;
-					g_clearColor->f[2] = limitColorComponent( g_clearColor->f[2] );
-				}
-				break;
-			}
-				
+        {	
             TranslateMessage( &msg );
             DispatchMessage( &msg );
         }
@@ -183,6 +136,15 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 {
     PAINTSTRUCT ps;
     HDC hdc;
+	int xPos = 0;
+	int yPos = 0;
+	int newYPos = 0;
+	int newXPos = 0;
+
+	RECT rc;
+	GetClientRect(g_hWnd, &rc);
+	UINT width = rc.right - rc.left;
+	UINT height = rc.bottom - rc.top;
 
     switch( message )
     {
@@ -195,6 +157,41 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
         PostQuitMessage( 0 );
         break;
 
+	case WM_LBUTTONDOWN:
+		xPos = GET_X_LPARAM( lParam );
+		yPos = GET_Y_LPARAM( lParam );
+		break;
+
+	case WM_MOUSEMOVE:
+		if ( MK_LBUTTON == wParam )
+		{
+			newYPos = GET_Y_LPARAM( lParam );
+			newXPos = GET_X_LPARAM( lParam );
+
+			if( abs( newXPos - xPos ) > JUMP_LIMIT )
+				xPos = newXPos;
+			if( abs( newYPos - yPos ) > JUMP_LIMIT )
+				yPos = newYPos;
+
+			g_clearColor->f[0] += (float)( newXPos - xPos ) / (float)width;
+			g_clearColor->f[1] -= (float)( newYPos - yPos ) / (float)height;
+
+			g_clearColor->f[0] = limitColorComponent( g_clearColor->f[0] );
+			g_clearColor->f[1] = limitColorComponent( g_clearColor->f[1] );
+
+			xPos = newXPos;
+			yPos = newYPos;
+		}
+		break;
+
+	case WM_MOUSEWHEEL:
+		if( MK_LBUTTON == GET_KEYSTATE_WPARAM( wParam ) )
+		{
+			g_clearColor->f[2] += GET_WHEEL_DELTA_WPARAM( wParam ) / (float)WHEEL_DELTA * MOUSEWHEEL_SENSITIVITY;
+			g_clearColor->f[2] = limitColorComponent( g_clearColor->f[2] );
+		}
+		break;
+	
         // Note that this tutorial does not handle resizing (WM_SIZE) requests,
         // so we created the window without the resize border.
 
