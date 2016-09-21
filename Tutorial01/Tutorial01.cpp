@@ -18,10 +18,9 @@
 #include <directxcolors.h>
 #include <math.h>
 #include "resource.h"
+#include "constants.h"
 using namespace DirectX;
 
-#define JUMP_LIMIT 30
-#define MOUSEWHEEL_SENSITIVITY 0.1f
 
 //--------------------------------------------------------------------------------------
 // Global Variables
@@ -142,7 +141,7 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 	int newXPos = 0;
 
 	RECT rc;
-	GetClientRect(g_hWnd, &rc);
+	GetClientRect( g_hWnd, &rc );
 	UINT width = rc.right - rc.left;
 	UINT height = rc.bottom - rc.top;
 
@@ -173,11 +172,11 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 			if( abs( newYPos - yPos ) > JUMP_LIMIT )
 				yPos = newYPos;
 
-			g_clearColor->f[0] += (float)( newXPos - xPos ) / (float)width;
-			g_clearColor->f[1] -= (float)( newYPos - yPos ) / (float)height;
+			g_clearColor->f[RED] += (float)( newXPos - xPos ) / (float)width;
+			g_clearColor->f[GREEN] -= (float)( newYPos - yPos ) / (float)height;
 
-			g_clearColor->f[0] = limitColorComponent( g_clearColor->f[0] );
-			g_clearColor->f[1] = limitColorComponent( g_clearColor->f[1] );
+			g_clearColor->f[RED] = limitColorComponent( g_clearColor->f[RED] );
+			g_clearColor->f[GREEN] = limitColorComponent( g_clearColor->f[GREEN] );
 
 			xPos = newXPos;
 			yPos = newYPos;
@@ -187,8 +186,8 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 	case WM_MOUSEWHEEL:
 		if( MK_LBUTTON == GET_KEYSTATE_WPARAM( wParam ) )
 		{
-			g_clearColor->f[2] += GET_WHEEL_DELTA_WPARAM( wParam ) / (float)WHEEL_DELTA * MOUSEWHEEL_SENSITIVITY;
-			g_clearColor->f[2] = limitColorComponent( g_clearColor->f[2] );
+			g_clearColor->f[BLUE] += GET_WHEEL_DELTA_WPARAM( wParam ) / (float)WHEEL_DELTA * MOUSEWHEEL_SENSITIVITY;
+			g_clearColor->f[BLUE] = limitColorComponent( g_clearColor->f[BLUE] );
 		}
 		break;
 	
