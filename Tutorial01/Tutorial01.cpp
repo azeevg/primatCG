@@ -37,7 +37,6 @@ IDXGISwapChain*         g_pSwapChain = nullptr;
 IDXGISwapChain1*        g_pSwapChain1 = nullptr;
 ID3D11RenderTargetView* g_pRenderTargetView = nullptr;
 DirectX::XMVECTORF32	g_clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-POINT					g_pos = { 0, 0 };
 
 
 //--------------------------------------------------------------------------------------
@@ -106,7 +105,7 @@ HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow)
 	wcex.hIcon = LoadIcon(hInstance, (LPCTSTR)IDI_TUTORIAL1);
 	wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-	wcex.lpszMenuName = nullptr;
+	wcex.lpszMenuName = nullptr;	
 	wcex.lpszClassName = L"TutorialWindowClass";
 	wcex.hIconSm = LoadIcon(wcex.hInstance, (LPCTSTR)IDI_TUTORIAL1);
 	if (!RegisterClassEx(&wcex))
@@ -134,9 +133,9 @@ HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow)
 //--------------------------------------------------------------------------------------
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	static POINT pos = { 0, 0 };
 	PAINTSTRUCT ps;
 	HDC hdc;
-
 	POINT newPos = { 0, 0 };
 
 	switch (message)
@@ -151,8 +150,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_LBUTTONDOWN:
-		g_pos.x = GET_X_LPARAM(lParam);
-		g_pos.y = GET_Y_LPARAM(lParam);
+		pos.x = GET_X_LPARAM(lParam);
+		pos.y = GET_Y_LPARAM(lParam);
 		break;
 
 	case WM_MOUSEMOVE:
@@ -161,19 +160,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			newPos.y = GET_Y_LPARAM(lParam);
 			newPos.x = GET_X_LPARAM(lParam);
 
-			if (abs(newPos.x - g_pos.x) > JUMP_LIMIT)
-				g_pos.x = newPos.x;
-			if (abs(newPos.y - g_pos.y) > JUMP_LIMIT)
-				g_pos.y = newPos.y;
+			if (abs(newPos.x - pos.x) > JUMP_LIMIT)
+				pos.x = newPos.x;
+			if (abs(newPos.y - pos.y) > JUMP_LIMIT)
+				pos.y = newPos.y;
 
-			g_clearColor->f[RED] += (float)(newPos.x - g_pos.x) / (float)WINDOW_WIDTH;
-			g_clearColor->f[GREEN] -= (float)(newPos.y - g_pos.y) / (float)WINDOW_HEIGHT;
+			g_clearColor->f[RED] += (float)(newPos.x - pos.x) / (float)WINDOW_WIDTH;
+			g_clearColor->f[GREEN] -= (float)(newPos.y - pos.y) / (float)WINDOW_HEIGHT;
 
 			g_clearColor->f[RED] = limitColorComponent(g_clearColor->f[RED]);
 			g_clearColor->f[GREEN] = limitColorComponent(g_clearColor->f[GREEN]);
 
-			g_pos.x = newPos.x;
-			g_pos.y = newPos.y;
+			pos.x = newPos.x;
+			pos.y = newPos.y;
 		}
 		break;
 
