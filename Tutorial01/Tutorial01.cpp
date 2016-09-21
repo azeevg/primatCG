@@ -37,6 +37,7 @@ IDXGISwapChain*         g_pSwapChain = nullptr;
 IDXGISwapChain1*        g_pSwapChain1 = nullptr;
 ID3D11RenderTargetView* g_pRenderTargetView = nullptr;
 DirectX::XMVECTORF32	g_clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+POINT					g_pos = { 0, 0 };
 
 
 //--------------------------------------------------------------------------------------
@@ -135,10 +136,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	PAINTSTRUCT ps;
 	HDC hdc;
-	int xPos = 0;
-	int yPos = 0;
-	int newYPos = 0;
-	int newXPos = 0;
+
+	POINT newPos = { 0, 0 };
 
 	switch (message)
 	{
@@ -152,29 +151,29 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_LBUTTONDOWN:
-		xPos = GET_X_LPARAM(lParam);
-		yPos = GET_Y_LPARAM(lParam);
+		g_pos.x = GET_X_LPARAM(lParam);
+		g_pos.y = GET_Y_LPARAM(lParam);
 		break;
 
 	case WM_MOUSEMOVE:
 		if (MK_LBUTTON == wParam)
 		{
-			newYPos = GET_Y_LPARAM(lParam);
-			newXPos = GET_X_LPARAM(lParam);
+			newPos.y = GET_Y_LPARAM(lParam);
+			newPos.x = GET_X_LPARAM(lParam);
 
-			if (abs(newXPos - xPos) > JUMP_LIMIT)
-				xPos = newXPos;
-			if (abs(newYPos - yPos) > JUMP_LIMIT)
-				yPos = newYPos;
+			if (abs(newPos.x - g_pos.x) > JUMP_LIMIT)
+				g_pos.x = newPos.x;
+			if (abs(newPos.y - g_pos.y) > JUMP_LIMIT)
+				g_pos.y = newPos.y;
 
-			g_clearColor->f[RED] += (float)(newXPos - xPos) / (float)WINDOW_WIDTH;
-			g_clearColor->f[GREEN] -= (float)(newYPos - yPos) / (float)WINDOW_HEIGHT;
+			g_clearColor->f[RED] += (float)(newPos.x - g_pos.x) / (float)WINDOW_WIDTH;
+			g_clearColor->f[GREEN] -= (float)(newPos.y - g_pos.y) / (float)WINDOW_HEIGHT;
 
 			g_clearColor->f[RED] = limitColorComponent(g_clearColor->f[RED]);
 			g_clearColor->f[GREEN] = limitColorComponent(g_clearColor->f[GREEN]);
 
-			xPos = newXPos;
-			yPos = newYPos;
+			g_pos.x = newPos.x;
+			g_pos.y = newPos.y;
 		}
 		break;
 
@@ -362,11 +361,8 @@ void Render()
 {
 	// Just clear the backbuffer
 
-	float ClearColor[4] = { g_clearColor->f[0],
-		g_clearColor->f[1],
-		g_clearColor->f[2],
-		1.0f };
-	g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, ClearColor);
+	float clearColor[4] = { g_clearColor->f[0], g_clearColor->f[1], g_clearColor->f[2], 1.0f };
+	g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, clearColor);
 	g_pSwapChain->Present(0, 0);
 }
 
