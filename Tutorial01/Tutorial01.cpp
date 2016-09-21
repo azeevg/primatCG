@@ -20,6 +20,8 @@
 #include "resource.h"
 using namespace DirectX;
 
+#define JUMP_LIMIT 30
+
 //--------------------------------------------------------------------------------------
 // Global Variables
 //--------------------------------------------------------------------------------------
@@ -34,7 +36,8 @@ ID3D11DeviceContext1*   g_pImmediateContext1 = nullptr;
 IDXGISwapChain*         g_pSwapChain = nullptr;
 IDXGISwapChain1*        g_pSwapChain1 = nullptr;
 ID3D11RenderTargetView* g_pRenderTargetView = nullptr;
-DirectX::XMVECTORF32	g_ClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+DirectX::XMVECTORF32	g_clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+
 
 //--------------------------------------------------------------------------------------
 // Forward declarations
@@ -44,7 +47,7 @@ HRESULT InitDevice();
 void CleanupDevice();
 LRESULT CALLBACK    WndProc( HWND, UINT, WPARAM, LPARAM );
 void Render();
-
+float limitColorComponent( float colorComponent );
 
 //--------------------------------------------------------------------------------------
 // Entry point to the program. Initializes everything and goes into a message processing 
@@ -66,8 +69,11 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
     // Main message loop
     MSG msg = {0};
-	int xPos = 0;
+   	int xPos = 0;
 	int yPos = 0;
+	int newYPos = 0;
+	int newXPos = 0;
+
 	RECT rc;
 	GetClientRect(g_hWnd, &rc);
 	UINT width = rc.right - rc.left;
@@ -80,36 +86,31 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 			switch( msg.message ) {
 		
 			case WM_LBUTTONDOWN:
-				xPos = GET_X_LPARAM(msg.lParam);
-				yPos = GET_Y_LPARAM(msg.lParam);
+				xPos = GET_X_LPARAM( msg.lParam );
+				yPos = GET_Y_LPARAM( msg.lParam );
 				break;
 	
 			case WM_MOUSEMOVE:
-				if (MK_LBUTTON == msg.wParam)
+				if( MK_LBUTTON == msg.wParam )
 				{
-					int newYPos = GET_Y_LPARAM(msg.lParam);
-					int newXPos = GET_X_LPARAM(msg.lParam);
+					newYPos = GET_Y_LPARAM( msg.lParam );
+					newXPos = GET_X_LPARAM( msg.lParam );
 					
-					if (abs(newXPos - xPos) > 30)
+					if (abs(newXPos - xPos) > JUMP_LIMIT)
 						xPos = newXPos;
-					if (abs(newYPos - yPos) > 30)
+					if (abs(newYPos - yPos) > JUMP_LIMIT)
 						yPos = newYPos;
 
-					g_ClearColor->f[0] += (float)(newXPos - xPos) / (float)width;
-					g_ClearColor->f[1] -= (float)(newYPos - yPos) / (float)height;
+					g_clearColor->f[0] += (float)(newXPos - xPos) / (float)width;
+					g_clearColor->f[1] -= (float)(newYPos - yPos) / (float)height;
 
-					if (g_ClearColor->f[0] > 1.0)
-						g_ClearColor->f[0] = 1.0;
-					if (g_ClearColor->f[0] < 0)
-						g_ClearColor->f[0] = 0.0;
-					if (g_ClearColor->f[1] > 1.0)
-						g_ClearColor->f[1] = 1.0;
-					if (g_ClearColor->f[1] < 0.0)
-						g_ClearColor->f[1] = 0.0;
-
+					g_clearColor->f[0] = limitColorComponent(g_clearColor->f[0]);
+					g_clearColor->f[1] = limitColorComponent(g_clearColor->f[1]);
+					
 					xPos = newXPos;
 					yPos = newYPos;
-
+					
+					Render();
 				}
 				break;
 			case WM_MOUSEWHEEL:
@@ -369,9 +370,9 @@ void Render()
 {
     // Just clear the backbuffer
 
-	float ClearColor[4] = { g_ClearColor->f[0], 
-							g_ClearColor->f[1], 
-							g_ClearColor->f[2], 
+	float ClearColor[4] = { g_clearColor->f[0], 
+							g_clearColor->f[1], 
+							g_clearColor->f[2], 
 							1.0f };
 	g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, ClearColor );
     g_pSwapChain->Present( 0, 0 );
@@ -392,4 +393,17 @@ void CleanupDevice()
     if( g_pImmediateContext ) g_pImmediateContext->Release();
     if( g_pd3dDevice1 ) g_pd3dDevice1->Release();
     if( g_pd3dDevice ) g_pd3dDevice->Release();
+}
+
+//--------------------------------------------------------------------------------------
+// User's functions
+//--------------------------------------------------------------------------------------
+float limitColorComponent( float colorComponent )
+{
+	if ( colorComponent > 1.0 )
+		return 1.0;
+	if ( colorComponent < 0.0 )
+		return 0.0;
+	
+	return colorComponent;
 }
