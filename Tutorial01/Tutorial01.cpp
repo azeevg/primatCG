@@ -21,6 +21,7 @@
 using namespace DirectX;
 
 #define JUMP_LIMIT 30
+#define MOUSEWHEEL_SENSITIVITY 0.1f
 
 //--------------------------------------------------------------------------------------
 // Global Variables
@@ -75,7 +76,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	int newXPos = 0;
 
 	RECT rc;
-	GetClientRect(g_hWnd, &rc);
+	GetClientRect( g_hWnd, &rc );
 	UINT width = rc.right - rc.left;
 	UINT height = rc.bottom - rc.top;
 
@@ -96,30 +97,30 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 					newYPos = GET_Y_LPARAM( msg.lParam );
 					newXPos = GET_X_LPARAM( msg.lParam );
 					
-					if (abs(newXPos - xPos) > JUMP_LIMIT)
+					if ( abs( newXPos - xPos ) > JUMP_LIMIT )
 						xPos = newXPos;
-					if (abs(newYPos - yPos) > JUMP_LIMIT)
+					if ( abs( newYPos - yPos ) > JUMP_LIMIT )
 						yPos = newYPos;
 
-					g_clearColor->f[0] += (float)(newXPos - xPos) / (float)width;
-					g_clearColor->f[1] -= (float)(newYPos - yPos) / (float)height;
+					g_clearColor->f[0] += (float)( newXPos - xPos ) / (float)width;
+					g_clearColor->f[1] -= (float)( newYPos - yPos ) / (float)height;
 
-					g_clearColor->f[0] = limitColorComponent(g_clearColor->f[0]);
-					g_clearColor->f[1] = limitColorComponent(g_clearColor->f[1]);
+					g_clearColor->f[0] = limitColorComponent( g_clearColor->f[0] );
+					g_clearColor->f[1] = limitColorComponent( g_clearColor->f[1] );
 					
 					xPos = newXPos;
 					yPos = newYPos;
-					
-					Render();
 				}
 				break;
-			case WM_MOUSEWHEEL:
-					
-				
-				break;
 
+			case WM_MOUSEWHEEL:
+				if ( MK_LBUTTON == GET_KEYSTATE_WPARAM( msg.wParam ) )
+				{
+					g_clearColor->f[2] += GET_WHEEL_DELTA_WPARAM( msg.wParam ) / (float)WHEEL_DELTA * MOUSEWHEEL_SENSITIVITY;
+					g_clearColor->f[2] = limitColorComponent( g_clearColor->f[2] );
+				}
+				break;
 			}
-				Render();
 				
             TranslateMessage( &msg );
             DispatchMessage( &msg );
@@ -374,7 +375,7 @@ void Render()
 							g_clearColor->f[1], 
 							g_clearColor->f[2], 
 							1.0f };
-	g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, ClearColor );
+	g_pImmediateContext->ClearRenderTargetView( g_pRenderTargetView, ClearColor );
     g_pSwapChain->Present( 0, 0 );
 }
 
