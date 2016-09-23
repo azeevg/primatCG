@@ -3,4 +3,9 @@
 !*.h
 !*.cpp
 !*.rc
+!*.vcxproj
+!*.vcxproj.filters
+!*.vcxproj.user
+!directx.ico
 !/Tutorial01/
+!/Tutorial03/
