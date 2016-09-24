@@ -3,6 +3,7 @@
 !*.h
 !*.cpp
 !*.rc
+!*.fx
 !*.vcxproj
 !*.vcxproj.filters
 !*.vcxproj.user
