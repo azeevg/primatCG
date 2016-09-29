@@ -19,7 +19,12 @@
 #include <directxcolors.h>
 #include "resource.h"
 
+#define SCALE (1.0f / 100.0f) 
+#define N_VERTEXES 24
+
 using namespace DirectX;
+
+
 
 //--------------------------------------------------------------------------------------
 // Structures
@@ -385,14 +390,53 @@ HRESULT InitDevice()
 	// Create vertex buffer
 	SimpleVertex vertices[] =
 	{
-		XMFLOAT3(0.0f, 0.5f, 0.5f),
-		XMFLOAT3(0.5f, -0.5f, 0.5f),
-		XMFLOAT3(-0.5f, -0.5f, 0.5f),
+		
+		XMFLOAT3(-30 * SCALE, -45 * SCALE, 0.5f),
+		XMFLOAT3(-45 * SCALE, -45 * SCALE, 0.5f),
+		XMFLOAT3(-5 * SCALE, 45 * SCALE, 0.5f),
+
+		XMFLOAT3(-30 * SCALE, -45 * SCALE, 0.5f),
+		XMFLOAT3(-5 * SCALE, 45 * SCALE, 0.5f),
+		XMFLOAT3(0 * SCALE, 45 * SCALE, 0.5f),
+
+		XMFLOAT3(-30 * SCALE, -45 * SCALE, 0.5f),
+		XMFLOAT3(0 * SCALE, 45 * SCALE, 0.5f),
+		XMFLOAT3(0 * SCALE, 25 * SCALE, 0.5f),
+		
+
+
+		XMFLOAT3(30 * SCALE, -45 * SCALE, 0.5f),
+		XMFLOAT3(0 * SCALE, 25 * SCALE, 0.5f),
+		XMFLOAT3(0 * SCALE, 45 * SCALE, 0.5f),
+
+		XMFLOAT3(30 * SCALE, -45 * SCALE, 0.5f),
+		XMFLOAT3(0 * SCALE, 45 * SCALE, 0.5f),
+		XMFLOAT3(5 * SCALE, 45 * SCALE, 0.5f),
+
+		XMFLOAT3(30 * SCALE, -45 * SCALE, 0.5f),
+		XMFLOAT3(5 * SCALE, 45 * SCALE, 0.5f),
+		XMFLOAT3(45 * SCALE, -45 * SCALE, 0.5f),
+
+		
+		
+
+		XMFLOAT3(-20 * SCALE, -20 * SCALE, 0.5f),
+		XMFLOAT3(-15 * SCALE, -10 * SCALE, 0.5f),
+		XMFLOAT3(15 * SCALE, -10 * SCALE, 0.5f),
+
+		XMFLOAT3(-20 * SCALE, -20 * SCALE, 0.5f),
+		XMFLOAT3(15 * SCALE, -10 * SCALE, 0.5f),
+		XMFLOAT3(20 * SCALE, -20 * SCALE, 0.5f),
+		
+	
+
+
 	};
+
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
 	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(SimpleVertex) * 3;
+	bd.ByteWidth = sizeof(SimpleVertex) * N_VERTEXES;
 	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	bd.CPUAccessFlags = 0;
 	D3D11_SUBRESOURCE_DATA InitData;
@@ -449,10 +493,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		hdc = BeginPaint(hWnd, &ps);
 		EndPaint(hWnd, &ps);
 		break;
-
+		
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
+
 
 		// Note that this tutorial does not handle resizing (WM_SIZE) requests,
 		// so we created the window without the resize border.
@@ -476,7 +521,7 @@ void Render()
 	// Render a triangle
 	g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
 	g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
-	g_pImmediateContext->Draw(3, 0);
+	g_pImmediateContext->Draw(N_VERTEXES, 0);
 
 	// Present the information rendered to the back buffer to the front buffer (the screen)
 	g_pSwapChain->Present(0, 0);
