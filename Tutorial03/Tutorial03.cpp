@@ -54,8 +54,9 @@ ID3D11PixelShader*      g_pPixelShader = nullptr;
 ID3D11InputLayout*      g_pVertexLayout = nullptr;
 ID3D11Buffer*           g_pVertexBuffer = nullptr;
 
-ID3D11RasterizerState* g_wireFrame = nullptr;
-ID3D11RasterizerState* g_solid = nullptr;
+ID3D11RasterizerState*	g_wireFrame = nullptr;
+ID3D11RasterizerState*	g_solid = nullptr;
+ID3D11RasterizerState*	g_actualState = nullptr;
 
 //--------------------------------------------------------------------------------------
 // Forward declarations
@@ -518,7 +519,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		PostQuitMessage(0);
 		break;
 
-
+	case WM_CHAR:
+		if (wParam == 'W' || wParam == 'w')
+		{
+			g_actualState = g_actualState == g_wireFrame ? g_solid : g_wireFrame;
+		}
+		break;
 		// Note that this tutorial does not handle resizing (WM_SIZE) requests,
 		// so we created the window without the resize border.
 
@@ -539,7 +545,7 @@ void Render()
 	g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, Colors::MidnightBlue);
 
 	// Render a triangle
-	g_pImmediateContext->RSSetState(g_wireFrame);
+	g_pImmediateContext->RSSetState(g_actualState);
 	g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
 	g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
 	g_pImmediateContext->Draw(3 * N_TRIANGLES, 0);
