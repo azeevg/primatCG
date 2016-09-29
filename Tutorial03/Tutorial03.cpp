@@ -19,7 +19,7 @@
 #include <directxcolors.h>
 #include "resource.h"
 
-#define SCALE (1.0f / 100.0f) 
+#define SCALE (1.0f / 60.0f) 
 #define N_TRIANGLES 8
 
 using namespace DirectX;
@@ -420,18 +420,14 @@ HRESULT InitDevice()
 		XMFLOAT3(45 * SCALE, -45 * SCALE, 0.5f),
 
 		
-		
 
-		XMFLOAT3(-20 * SCALE, -20 * SCALE, 0.5f),
+		XMFLOAT3(-19.3 * SCALE, -20 * SCALE, 0.5f),
 		XMFLOAT3(-15 * SCALE, -10 * SCALE, 0.5f),
 		XMFLOAT3(15 * SCALE, -10 * SCALE, 0.5f),
 
-		XMFLOAT3(-20 * SCALE, -20 * SCALE, 0.5f),
+		XMFLOAT3(-19.3 * SCALE, -20 * SCALE, 0.5f),
 		XMFLOAT3(15 * SCALE, -10 * SCALE, 0.5f),
-		XMFLOAT3(20 * SCALE, -20 * SCALE, 0.5f),
-		
-	
-
+		XMFLOAT3(19.3 * SCALE, -20 * SCALE, 0.5f)
 
 	};
 
@@ -543,7 +539,7 @@ void Render()
 	g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, Colors::MidnightBlue);
 
 	// Render a triangle
-	g_pImmediateContext->RSSetState(g_solid);
+	g_pImmediateContext->RSSetState(g_wireFrame);
 	g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
 	g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
 	g_pImmediateContext->Draw(3 * N_TRIANGLES, 0);
