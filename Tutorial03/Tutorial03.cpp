@@ -20,7 +20,7 @@
 #include "resource.h"
 
 #define SCALE (1.0f / 100.0f) 
-#define N_VERTEXES 24
+#define N_TRIANGLES 8
 
 using namespace DirectX;
 
@@ -54,6 +54,8 @@ ID3D11PixelShader*      g_pPixelShader = nullptr;
 ID3D11InputLayout*      g_pVertexLayout = nullptr;
 ID3D11Buffer*           g_pVertexBuffer = nullptr;
 
+ID3D11RasterizerState* g_wireFrame = nullptr;
+ID3D11RasterizerState* g_solid = nullptr;
 
 //--------------------------------------------------------------------------------------
 // Forward declarations
@@ -433,18 +435,37 @@ HRESULT InitDevice()
 
 	};
 
+	
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
 	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(SimpleVertex) * N_VERTEXES;
+	bd.ByteWidth = sizeof(SimpleVertex) * 3 * N_TRIANGLES;
 	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	bd.CPUAccessFlags = 0;
 	D3D11_SUBRESOURCE_DATA InitData;
 	ZeroMemory(&InitData, sizeof(InitData));
 	InitData.pSysMem = vertices;
 	hr = g_pd3dDevice->CreateBuffer(&bd, &InitData, &g_pVertexBuffer);
+	
+
 	if (FAILED(hr))
 		return hr;
+
+	D3D11_RASTERIZER_DESC desc;
+	ZeroMemory(&desc, sizeof(D3D11_RASTERIZER_DESC));
+	desc.FillMode = D3D11_FILL_WIREFRAME;
+	desc.CullMode = D3D11_CULL_NONE;
+	hr = g_pd3dDevice->CreateRasterizerState(&desc, &g_wireFrame);
+	
+	if (FAILED(hr))
+		return hr;
+
+	desc.FillMode = D3D11_FILL_SOLID;
+	hr = g_pd3dDevice->CreateRasterizerState(&desc, &g_solid);
+
+	if (FAILED(hr))
+		return hr;
+
 
 	// Set vertex buffer
 	UINT stride = sizeof(SimpleVertex);
@@ -476,6 +497,9 @@ void CleanupDevice()
 	if (g_pImmediateContext) g_pImmediateContext->Release();
 	if (g_pd3dDevice1) g_pd3dDevice1->Release();
 	if (g_pd3dDevice) g_pd3dDevice->Release();
+	if (g_wireFrame) g_wireFrame->Release();
+	if (g_solid) g_solid->Release();
+
 }
 
 
@@ -519,9 +543,10 @@ void Render()
 	g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, Colors::MidnightBlue);
 
 	// Render a triangle
+	g_pImmediateContext->RSSetState(g_solid);
 	g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
 	g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
-	g_pImmediateContext->Draw(N_VERTEXES, 0);
+	g_pImmediateContext->Draw(3 * N_TRIANGLES, 0);
 
 	// Present the information rendered to the back buffer to the front buffer (the screen)
 	g_pSwapChain->Present(0, 0);
