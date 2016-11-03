@@ -21,6 +21,20 @@
 
 using namespace DirectX;
 
+#define ZOOM_SENTIVITY	0.2f
+#define PHI_SENTIVITY	0.06f
+#define THETA_SENTIVITY	0.06f
+
+#define R_MIN			5.0f
+#define R_MAX			10.0f
+#define PHI_MIN			0.0f
+#define PHI_MAX			XM_PI * 2.0f
+#define THETA_MIN		0.0f
+#define THETA_MAX		XM_PI
+
+#define SCENE_SPEED		0.000125f
+#define PERMITTED_JUMP  10
+
 //--------------------------------------------------------------------------------------
 // Structures
 //--------------------------------------------------------------------------------------
@@ -38,6 +52,12 @@ struct ConstantBuffer
 	XMMATRIX mProjection;
 };
 
+struct SphericalCoordinates
+{
+	float r;
+	float phi;
+	float theta;
+};
 
 //--------------------------------------------------------------------------------------
 // Global Variables
@@ -65,6 +85,10 @@ XMMATRIX                g_World1;
 XMMATRIX                g_World2;
 XMMATRIX                g_View;
 XMMATRIX                g_Projection;
+
+SphericalCoordinates g_Coord = { 5.0f, XM_PI, XM_PI / 2.0f };
+bool g_IsCameraMoving = false;
+bool g_IsSceneMoving = true;
 
 
 //--------------------------------------------------------------------------------------
@@ -507,8 +531,9 @@ HRESULT InitDevice()
 	g_World1 = XMMatrixIdentity();
 	g_World2 = XMMatrixIdentity();
 
+
 	// Initialize the view matrix
-	XMVECTOR Eye = XMVectorSet(0.0f, 1.0f, -5.0f, 0.0f);
+	XMVECTOR Eye = XMVectorSet(0.0f, 0.0f, (R_MAX + R_MIN) / 2.0f, 0.0f);
 	XMVECTOR At = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	g_View = XMMatrixLookAtLH(Eye, At, Up);
@@ -554,6 +579,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	PAINTSTRUCT ps;
 	HDC hdc;
 
+	static int prevPosX = 0;
+	static int prevPosY = 0;
+
 	switch (message)
 	{
 	case WM_PAINT:
@@ -561,13 +589,51 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		EndPaint(hWnd, &ps);
 		break;
 
-	case WM_DESTROY:
-		PostQuitMessage(0);
+	case WM_CHAR:
+		if (wParam == 'p' || wParam == 'P')
+			g_IsSceneMoving = !g_IsSceneMoving;
 		break;
-
 
 		// Note that this tutorial does not handle resizing (WM_SIZE) requests,
 		// so we created the window without the resize border.
+
+	case WM_MOUSEMOVE:
+		if (wParam & MK_LBUTTON)
+		{
+			int posX = LOWORD(lParam);
+			int posY = HIWORD(lParam);
+
+			if (abs(posX - prevPosX) > PERMITTED_JUMP)
+				prevPosX = posX;
+			if (abs(posY - prevPosY) > PERMITTED_JUMP)
+				prevPosY = posY;
+
+			float dPhi = (posX - prevPosX) / (PHI_MAX - PHI_MIN) * PHI_SENTIVITY;
+			float dTheta = (prevPosY - posY) / (THETA_MAX - THETA_MIN) * THETA_SENTIVITY;
+
+			if (g_Coord.phi + dPhi <= PHI_MAX && g_Coord.phi + dPhi >= PHI_MIN)
+				g_Coord.phi += dPhi;
+
+			if (g_Coord.theta + dTheta <= THETA_MAX && g_Coord.theta + dTheta >= THETA_MIN)
+				g_Coord.theta += dTheta;
+			
+			prevPosX = posX;
+			prevPosY = posY;
+		}
+		break;
+
+	case WM_MOUSEWHEEL:
+	{
+		float delta = GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA * ZOOM_SENTIVITY;
+
+		if (g_Coord.r - delta <= R_MAX && g_Coord.r - delta >= R_MIN)
+			g_Coord.r -= delta;
+	}
+		break;
+
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
 
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
@@ -584,30 +650,31 @@ void Render()
 {
 	// Update our time
 	static float t = 0.0f;
-	if (g_driverType == D3D_DRIVER_TYPE_REFERENCE)
-	{
-		t += (float)XM_PI * 0.0125f;
+
+	if (g_IsSceneMoving)
+		t += (float)XM_PI * SCENE_SPEED;
+
+
+	FLOAT z = g_Coord.r * sinf(g_Coord.theta) * cosf(g_Coord.phi);
+	FLOAT x = g_Coord.r * sinf(g_Coord.theta) * sinf(g_Coord.phi);
+	FLOAT y = g_Coord.r * cosf(g_Coord.theta);
+	XMVECTOR Eye = XMVectorSet(x, y, z, 0.0f);
+	XMVECTOR At = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	g_View = XMMatrixLookAtLH(Eye, At, Up);
+
+	if (g_IsSceneMoving) {
+		// 1st Cube: Rotate around the origin
+		g_World1 = XMMatrixRotationY(t);
+
+		// 2nd Cube:  Rotate around origin
+		XMMATRIX mSpin = XMMatrixRotationZ(-t);
+		XMMATRIX mOrbit = XMMatrixRotationY(-t * 2.0f);
+		XMMATRIX mTranslate = XMMatrixTranslation(-4.0f, 0.0f, 0.0f);
+		XMMATRIX mScale = XMMatrixScaling(0.3f, 0.3f, 0.3f);
+
+		g_World2 = mScale * mSpin * mTranslate * mOrbit;
 	}
-	else
-	{
-		static ULONGLONG timeStart = 0;
-		ULONGLONG timeCur = GetTickCount64();
-		if (timeStart == 0)
-			timeStart = timeCur;
-		t = (timeCur - timeStart) / 1000.0f;
-	}
-
-	// 1st Cube: Rotate around the origin
-	g_World1 = XMMatrixRotationY(t);
-
-	// 2nd Cube:  Rotate around origin
-	XMMATRIX mSpin = XMMatrixRotationZ(-t);
-	XMMATRIX mOrbit = XMMatrixRotationY(-t * 2.0f);
-	XMMATRIX mTranslate = XMMatrixTranslation(-4.0f, 0.0f, 0.0f);
-	XMMATRIX mScale = XMMatrixScaling(0.3f, 0.3f, 0.3f);
-
-	g_World2 = mScale * mSpin * mTranslate * mOrbit;
-
 	//
 	// Clear the back buffer
 	//
@@ -643,6 +710,7 @@ void Render()
 	cb2.mView = XMMatrixTranspose(g_View);
 	cb2.mProjection = XMMatrixTranspose(g_Projection);
 	g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb2, 0, 0);
+
 
 	//
 	// Render the second cube
