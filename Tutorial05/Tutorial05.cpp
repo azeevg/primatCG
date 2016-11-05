@@ -21,19 +21,19 @@
 
 using namespace DirectX;
 
-#define ZOOM_SENTIVITY	0.2f
-#define PHI_SENTIVITY	0.06f
-#define THETA_SENTIVITY	0.06f
+#define ZOOM_SENSITIVITY	0.2f
+#define PHI_SENSITIVITY		0.06f
+#define THETA_SENSITIVITY	0.06f
 
-#define R_MIN			5.0f
-#define R_MAX			10.0f
-#define PHI_MIN			0.0f
-#define PHI_MAX			XM_PI * 2.0f
-#define THETA_MIN		0.0f
-#define THETA_MAX		XM_PI
+#define R_MIN				5.0f
+#define R_MAX				10.0f
+#define PHI_MIN				0.0f
+#define PHI_MAX				XM_PI * 2.0f
+#define THETA_MIN			0.0f
+#define THETA_MAX			XM_PI
 
-#define SCENE_SPEED		0.000125f
-#define PERMITTED_JUMP  10
+#define SCENE_SPEED			0.000125f
+#define PERMITTED_JUMP		10
 
 //--------------------------------------------------------------------------------------
 // Structures
@@ -86,8 +86,10 @@ XMMATRIX                g_World2;
 XMMATRIX                g_View;
 XMMATRIX                g_Projection;
 
-SphericalCoordinates g_Coord = { 5.0f, XM_PI, XM_PI / 2.0f };
-bool g_IsCameraMoving = false;
+SphericalCoordinates g_Coord = { (R_MAX + R_MIN) / 2.0f, 
+								(PHI_MAX + PHI_MIN) / 2.0f, 
+								(THETA_MAX + THETA_MIN) / 2.0f};
+bool g_IsCameraMoved = false;
 bool g_IsSceneMoving = true;
 
 
@@ -608,8 +610,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (abs(posY - prevPosY) > PERMITTED_JUMP)
 				prevPosY = posY;
 
-			float dPhi = (posX - prevPosX) / (PHI_MAX - PHI_MIN) * PHI_SENTIVITY;
-			float dTheta = (prevPosY - posY) / (THETA_MAX - THETA_MIN) * THETA_SENTIVITY;
+			float dPhi = (posX - prevPosX) / (PHI_MAX - PHI_MIN) * PHI_SENSITIVITY;
+			float dTheta = (prevPosY - posY) / (THETA_MAX - THETA_MIN) * THETA_SENSITIVITY;
 
 			if (g_Coord.phi + dPhi <= PHI_MAX && g_Coord.phi + dPhi >= PHI_MIN)
 				g_Coord.phi += dPhi;
@@ -619,15 +621,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			
 			prevPosX = posX;
 			prevPosY = posY;
+
+			g_IsCameraMoved = true;
 		}
 		break;
 
 	case WM_MOUSEWHEEL:
 	{
-		float delta = GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA * ZOOM_SENTIVITY;
+		float delta = GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA * ZOOM_SENSITIVITY;
 
 		if (g_Coord.r - delta <= R_MAX && g_Coord.r - delta >= R_MIN)
 			g_Coord.r -= delta;
+
+		g_IsCameraMoved = true;
 	}
 		break;
 
@@ -652,18 +658,9 @@ void Render()
 	static float t = 0.0f;
 
 	if (g_IsSceneMoving)
+	{
 		t += (float)XM_PI * SCENE_SPEED;
-
-
-	FLOAT z = g_Coord.r * sinf(g_Coord.theta) * cosf(g_Coord.phi);
-	FLOAT x = g_Coord.r * sinf(g_Coord.theta) * sinf(g_Coord.phi);
-	FLOAT y = g_Coord.r * cosf(g_Coord.theta);
-	XMVECTOR Eye = XMVectorSet(x, y, z, 0.0f);
-	XMVECTOR At = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	g_View = XMMatrixLookAtLH(Eye, At, Up);
-
-	if (g_IsSceneMoving) {
+	
 		// 1st Cube: Rotate around the origin
 		g_World1 = XMMatrixRotationY(t);
 
@@ -675,6 +672,20 @@ void Render()
 
 		g_World2 = mScale * mSpin * mTranslate * mOrbit;
 	}
+
+	if (g_IsCameraMoved)
+	{
+		float x = g_Coord.r * sinf(g_Coord.theta) * sinf(g_Coord.phi);
+		float y = g_Coord.r * cosf(g_Coord.theta);
+		float z = g_Coord.r * sinf(g_Coord.theta) * cosf(g_Coord.phi);
+		XMVECTOR Eye = XMVectorSet(x, y, z, 0.0f);
+		XMVECTOR At = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+		XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+		g_View = XMMatrixLookAtLH(Eye, At, Up);
+		
+		g_IsCameraMoved = false;
+	}
+	
 	//
 	// Clear the back buffer
 	//
