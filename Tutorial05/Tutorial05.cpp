@@ -535,8 +535,11 @@ HRESULT InitDevice()
 
 
 	// Initialize the view matrix
-	XMVECTOR Eye = XMVectorSet(0.0f, 0.0f, (R_MAX + R_MIN) / 2.0f, 0.0f);
-	XMVECTOR At = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	float x = g_Coord.r * sinf(g_Coord.theta) * sinf(g_Coord.phi);
+	float y = g_Coord.r * cosf(g_Coord.theta);
+	float z = g_Coord.r * sinf(g_Coord.theta) * cosf(g_Coord.phi);
+	XMVECTOR Eye = XMVectorSet(x, y, z, 0.0f); 
+	XMVECTOR At = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	g_View = XMMatrixLookAtLH(Eye, At, Up);
 
