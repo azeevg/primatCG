@@ -684,8 +684,7 @@ void Render()
 	cb1.mWorld = XMMatrixTranspose( g_World );
 	cb1.mView = XMMatrixTranspose( g_View );
 	cb1.mProjection = XMMatrixTranspose( g_Projection );
-	cb1.vLightRadius.x = WHITE_RADIUS;
-	cb1.vLightRadius.y = RED_RADIUS;
+	cb1.vLightRadius = { WHITE_RADIUS, RED_RADIUS, 0.0f, 0.0f };
 	cb1.vLightDir[0] = vLightDirs[0];
 	cb1.vLightDir[1] = vLightDirs[1];
 	cb1.vLightColor[0] = vLightColors[0];
