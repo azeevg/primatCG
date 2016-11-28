@@ -21,6 +21,9 @@
 
 using namespace DirectX;
 
+#define WHITE_RADIUS 2.0
+#define RED_RADIUS   1.5
+
 //--------------------------------------------------------------------------------------
 // Structures
 //--------------------------------------------------------------------------------------
@@ -36,6 +39,7 @@ struct ConstantBuffer
 	XMMATRIX mWorld;
 	XMMATRIX mView;
 	XMMATRIX mProjection;
+	XMFLOAT4 vLightRadius;
 	XMFLOAT4 vLightDir[2];
 	XMFLOAT4 vLightColor[2];
 	XMFLOAT4 vOutputColor;
@@ -638,7 +642,11 @@ void Render()
     }
 
     // Rotate cube around the origin
-	g_World = XMMatrixRotationY( t );
+	XMMATRIX mOrbit = XMMatrixRotationY(t);
+	XMMATRIX mScale = XMMatrixScaling(2.0f, 1.0f, 2.0f);
+	XMMATRIX mTranslate = XMMatrixTranslation(0.0f, -1.5f, 0.0f);
+
+	g_World = mTranslate * mScale * mOrbit;
 
     // Setup our lighting parameters
     XMFLOAT4 vLightDirs[2] =
@@ -676,6 +684,8 @@ void Render()
 	cb1.mWorld = XMMatrixTranspose( g_World );
 	cb1.mView = XMMatrixTranspose( g_View );
 	cb1.mProjection = XMMatrixTranspose( g_Projection );
+	cb1.vLightRadius.x = WHITE_RADIUS;
+	cb1.vLightRadius.y = RED_RADIUS;
 	cb1.vLightDir[0] = vLightDirs[0];
 	cb1.vLightDir[1] = vLightDirs[1];
 	cb1.vLightColor[0] = vLightColors[0];
@@ -690,7 +700,7 @@ void Render()
 	g_pImmediateContext->VSSetConstantBuffers( 0, 1, &g_pConstantBuffer );
 	g_pImmediateContext->PSSetShader( g_pPixelShader, nullptr, 0 );
 	g_pImmediateContext->PSSetConstantBuffers( 0, 1, &g_pConstantBuffer );
-	g_pImmediateContext->DrawIndexed( 36, 0, 0 );
+	g_pImmediateContext->DrawIndexed( 12, 0, 0 );
 
     //
     // Render each light
