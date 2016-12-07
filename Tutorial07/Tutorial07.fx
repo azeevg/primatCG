@@ -7,7 +7,8 @@
 //--------------------------------------------------------------------------------------
 // Constant Buffer Variables
 //--------------------------------------------------------------------------------------
-Texture2D txDiffuse : register( t0 );
+Texture2D txDiffuse_1 : register(t0);
+Texture2D txDiffuse_2 : register(t1);
 SamplerState samLinear : register( s0 );
 
 cbuffer cbNeverChanges : register( b0 )
@@ -61,5 +62,7 @@ PS_INPUT VS( VS_INPUT input )
 //--------------------------------------------------------------------------------------
 float4 PS( PS_INPUT input) : SV_Target
 {
-    return txDiffuse.Sample( samLinear, input.Tex ) * vMeshColor;
+    //return txDiffuse.Sample( samLinear, input.Tex ) * vMeshColor;
+	return (txDiffuse_1.Sample(samLinear, input.Tex) + txDiffuse_2.Sample(samLinear, input.Tex)) * 0.5f;
+
 }

@@ -22,6 +22,11 @@
 
 using namespace DirectX;
 
+#define POINT_MIPMAP true
+#define LINEAR_MIPMAP false
+#define LODBIAS_STEP 0.2f
+
+
 //--------------------------------------------------------------------------------------
 // Structures
 //--------------------------------------------------------------------------------------
@@ -72,13 +77,16 @@ ID3D11Buffer*                       g_pIndexBuffer = nullptr;
 ID3D11Buffer*                       g_pCBNeverChanges = nullptr;
 ID3D11Buffer*                       g_pCBChangeOnResize = nullptr;
 ID3D11Buffer*                       g_pCBChangesEveryFrame = nullptr;
-ID3D11ShaderResourceView*           g_pTextureRV = nullptr;
+ID3D11ShaderResourceView*           g_pTextureRV_1 = nullptr;
+ID3D11ShaderResourceView*           g_pTextureRV_2 = nullptr;
 ID3D11SamplerState*                 g_pSamplerLinear = nullptr;
 XMMATRIX                            g_World;
 XMMATRIX                            g_View;
 XMMATRIX                            g_Projection;
-XMFLOAT4                            g_vMeshColor( 0.7f, 0.7f, 0.7f, 1.0f );
-
+//XMFLOAT4                            g_vMeshColor( 0.7f, 0.7f, 0.7f, 1.0f );
+bool								g_isStateChanged = false;
+bool								g_mipmapFiltering = POINT_MIPMAP;
+FLOAT								g_lodBias = 0.0f;
 
 //--------------------------------------------------------------------------------------
 // Forward declarations
@@ -551,9 +559,20 @@ HRESULT InitDevice()
         return hr;
 
     // Load the Texture
-    hr = CreateDDSTextureFromFile( g_pd3dDevice, L"seafloor.dds", nullptr, &g_pTextureRV );
-    if( FAILED( hr ) )
+    //hr = CreateDDSTextureFromFile( g_pd3dDevice, L"seafloor.dds", nullptr, &g_pTextureRV );
+	hr = CreateDDSTextureFromFileEx(g_pd3dDevice, g_pImmediateContext, L"seafloor.dds", 0, D3D11_USAGE_DEFAULT,
+		D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET, 0, D3D11_RESOURCE_MISC_GENERATE_MIPS,
+		TRUE, nullptr, &g_pTextureRV_1);
+	if( FAILED( hr ) )
         return hr;
+	g_pImmediateContext->GenerateMips(g_pTextureRV_1);
+
+	hr = CreateDDSTextureFromFileEx(g_pd3dDevice, g_pImmediateContext, L"black.dds", 0, D3D11_USAGE_DEFAULT,
+		D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET, 0, D3D11_RESOURCE_MISC_GENERATE_MIPS,
+		TRUE, nullptr, &g_pTextureRV_2);
+	if (FAILED(hr))
+		return hr;
+	g_pImmediateContext->GenerateMips(g_pTextureRV_2);
 
     // Create the sample state
     D3D11_SAMPLER_DESC sampDesc;
@@ -601,8 +620,9 @@ void CleanupDevice()
     if( g_pImmediateContext ) g_pImmediateContext->ClearState();
 
     if( g_pSamplerLinear ) g_pSamplerLinear->Release();
-    if( g_pTextureRV ) g_pTextureRV->Release();
-    if( g_pCBNeverChanges ) g_pCBNeverChanges->Release();
+    if( g_pTextureRV_1 ) g_pTextureRV_1->Release();
+	if (g_pTextureRV_2) g_pTextureRV_2->Release();
+	if( g_pCBNeverChanges ) g_pCBNeverChanges->Release();
     if( g_pCBChangeOnResize ) g_pCBChangeOnResize->Release();
     if( g_pCBChangesEveryFrame ) g_pCBChangesEveryFrame->Release();
     if( g_pVertexBuffer ) g_pVertexBuffer->Release();
@@ -636,6 +656,28 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
         hdc = BeginPaint( hWnd, &ps );
         EndPaint( hWnd, &ps );
         break;
+
+	case WM_CHAR:
+		switch (wParam)
+		{
+		case 'm':
+		case 'M':
+			g_isStateChanged = true;
+			g_mipmapFiltering = !g_mipmapFiltering;
+			break;
+		case 'q':
+		case 'Q':
+			g_isStateChanged = true;
+			g_lodBias -= LODBIAS_STEP;
+			break;
+		case 'w':
+		case 'W':
+			g_isStateChanged = true;
+			g_lodBias += LODBIAS_STEP;
+			break;
+
+		}
+		break;
 
     case WM_DESTROY:
         PostQuitMessage( 0 );
@@ -676,9 +718,9 @@ void Render()
     g_World = XMMatrixRotationY( t );
 
     // Modify the color
-    g_vMeshColor.x = ( sinf( t * 1.0f ) + 1.0f ) * 0.5f;
-    g_vMeshColor.y = ( cosf( t * 3.0f ) + 1.0f ) * 0.5f;
-    g_vMeshColor.z = ( sinf( t * 5.0f ) + 1.0f ) * 0.5f;
+    //g_vMeshColor.x = ( sinf( t * 1.0f ) + 1.0f ) * 0.5f;
+    //g_vMeshColor.y = ( cosf( t * 3.0f ) + 1.0f ) * 0.5f;
+    //g_vMeshColor.z = ( sinf( t * 5.0f ) + 1.0f ) * 0.5f;
 
     //
     // Clear the back buffer
@@ -694,9 +736,27 @@ void Render()
     // Update variables that change once per frame
     //
     CBChangesEveryFrame cb;
-    cb.mWorld = XMMatrixTranspose( g_World );
-    cb.vMeshColor = g_vMeshColor;
+	cb.mWorld = XMMatrixTranspose(g_World);
+    //cb.vMeshColor = g_vMeshColor;
     g_pImmediateContext->UpdateSubresource( g_pCBChangesEveryFrame, 0, nullptr, &cb, 0, 0 );
+
+	if (g_isStateChanged)
+	{
+		if (g_pSamplerLinear) g_pSamplerLinear->Release();
+		D3D11_SAMPLER_DESC sampDesc;
+		ZeroMemory(&sampDesc, sizeof(sampDesc));
+		sampDesc.Filter = g_mipmapFiltering ? D3D11_FILTER_MIN_MAG_MIP_POINT : D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+		sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+		sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+		sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+		sampDesc.MinLOD = 0;
+		sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+		sampDesc.MipLODBias = g_lodBias;
+		g_pd3dDevice->CreateSamplerState(&sampDesc, &g_pSamplerLinear);
+		g_isStateChanged = false;
+	}
+
 
     //
     // Render the cube
@@ -707,7 +767,8 @@ void Render()
     g_pImmediateContext->VSSetConstantBuffers( 2, 1, &g_pCBChangesEveryFrame );
     g_pImmediateContext->PSSetShader( g_pPixelShader, nullptr, 0 );
     g_pImmediateContext->PSSetConstantBuffers( 2, 1, &g_pCBChangesEveryFrame );
-    g_pImmediateContext->PSSetShaderResources( 0, 1, &g_pTextureRV );
+    g_pImmediateContext->PSSetShaderResources( 0, 1, &g_pTextureRV_1 );
+	g_pImmediateContext->PSSetShaderResources( 1, 1, &g_pTextureRV_2 );
     g_pImmediateContext->PSSetSamplers( 0, 1, &g_pSamplerLinear );
     g_pImmediateContext->DrawIndexed( 36, 0, 0 );
 
