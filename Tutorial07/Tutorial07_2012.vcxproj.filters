@@ -43,5 +43,8 @@
     <Image Include="C:\Users\Gleb\Desktop\black.dds">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="desk.dds">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

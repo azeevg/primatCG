@@ -85,7 +85,7 @@ XMMATRIX                            g_View;
 XMMATRIX                            g_Projection;
 //XMFLOAT4                            g_vMeshColor( 0.7f, 0.7f, 0.7f, 1.0f );
 bool								g_isStateChanged = false;
-bool								g_mipmapFiltering = POINT_MIPMAP;
+bool								g_isMipPointFiltering = POINT_MIPMAP;
 FLOAT								g_lodBias = 0.0f;
 
 //--------------------------------------------------------------------------------------
@@ -567,7 +567,7 @@ HRESULT InitDevice()
         return hr;
 	g_pImmediateContext->GenerateMips(g_pTextureRV_1);
 
-	hr = CreateDDSTextureFromFileEx(g_pd3dDevice, g_pImmediateContext, L"black.dds", 0, D3D11_USAGE_DEFAULT,
+	hr = CreateDDSTextureFromFileEx(g_pd3dDevice, g_pImmediateContext, L"desk.dds", 0, D3D11_USAGE_DEFAULT,
 		D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET, 0, D3D11_RESOURCE_MISC_GENERATE_MIPS,
 		TRUE, nullptr, &g_pTextureRV_2);
 	if (FAILED(hr))
@@ -663,7 +663,7 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 		case 'm':
 		case 'M':
 			g_isStateChanged = true;
-			g_mipmapFiltering = !g_mipmapFiltering;
+			g_isMipPointFiltering = !g_isMipPointFiltering;
 			break;
 		case 'q':
 		case 'Q':
@@ -745,7 +745,7 @@ void Render()
 		if (g_pSamplerLinear) g_pSamplerLinear->Release();
 		D3D11_SAMPLER_DESC sampDesc;
 		ZeroMemory(&sampDesc, sizeof(sampDesc));
-		sampDesc.Filter = g_mipmapFiltering ? D3D11_FILTER_MIN_MAG_MIP_POINT : D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR;
+		sampDesc.Filter = g_isMipPointFiltering ? D3D11_FILTER_MIN_MAG_MIP_POINT : D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR;
 		sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 		sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
 		sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;

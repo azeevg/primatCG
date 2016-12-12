@@ -407,6 +407,7 @@
     <ResourceCompile Include="Tutorial07.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="desk.dds" />
     <Image Include="C:\Users\Gleb\Desktop\black.dds" />
     <Image Include="seafloor.dds" />
   </ItemGroup>
