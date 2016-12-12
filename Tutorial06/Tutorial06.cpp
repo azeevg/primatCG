@@ -651,7 +651,7 @@ void Render()
     // Setup our lighting parameters
     XMFLOAT4 vLightDirs[2] =
     {
-        XMFLOAT4( -0.577f, 0.577f, -0.577f, 1.0f ),
+        XMFLOAT4( 0.5f, 0.577f, 0.5f, 1.0f ),
         XMFLOAT4( 0.0f, 0.0f, -1.0f, 1.0f ),
     };
     XMFLOAT4 vLightColors[2] =
@@ -664,12 +664,13 @@ void Render()
 	XMMATRIX mRotate = XMMatrixRotationY( -2.0f * t );
 	XMVECTOR vLightDir = XMLoadFloat4( &vLightDirs[1] );
 	vLightDir = XMVector3Transform( vLightDir, mRotate );
-	XMStoreFloat4( &vLightDirs[1], vLightDir );
+	XMStoreFloat4(&vLightDirs[1], vLightDir);
 
+/*
 	mRotate = XMMatrixRotationY(-2.0f * t);
 	vLightDir = XMLoadFloat4(&vLightDirs[0]);
 	vLightDir = XMVector3Transform(vLightDir, mRotate);
-	XMStoreFloat4(&vLightDirs[0], vLightDir);
+	XMStoreFloat4(&vLightDirs[0], vLightDir);*/
 
 	//
     // Clear the back buffer
