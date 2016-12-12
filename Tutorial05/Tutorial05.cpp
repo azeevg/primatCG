@@ -17,6 +17,7 @@
 #include <d3dcompiler.h>
 #include <directxmath.h>
 #include <directxcolors.h>
+#include <iostream>
 #include "resource.h"
 
 using namespace DirectX;

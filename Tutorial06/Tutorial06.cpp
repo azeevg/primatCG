@@ -666,6 +666,11 @@ void Render()
 	vLightDir = XMVector3Transform( vLightDir, mRotate );
 	XMStoreFloat4( &vLightDirs[1], vLightDir );
 
+	mRotate = XMMatrixRotationY(-2.0f * t);
+	vLightDir = XMLoadFloat4(&vLightDirs[0]);
+	vLightDir = XMVector3Transform(vLightDir, mRotate);
+	XMStoreFloat4(&vLightDirs[0], vLightDir);
+
 	//
     // Clear the back buffer
     //
